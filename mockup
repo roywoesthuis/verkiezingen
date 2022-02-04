@@ -1,0 +1,78 @@
+// ==UserScript==
+// @name         Stembureau mockup
+// @namespace    TessBakker
+// @version      0.2
+// @description  Hoe stembureaus-kaart er ongeveer gaat uitzien.
+// @author       TessBakker
+// @match        https://simverkiezingen.simpreproductie.nl/uw-stembureau*
+// @require      http://code.jquery.com/jquery-3.2.1.min.js
+// ==/UserScript==
+
+(function() {
+
+    const stages = [
+        {text: "De wachttijd is 5 minuten.", color: "green"},
+        {text: "De wachttijd is 10 minuten.", color: "orange"},
+        {text: "De wachttijd is 15 minuten.", color: "red"}
+    ];
+
+    const stage = Math.floor((Math.random() * 3));
+
+    (new MutationObserver(checkInit)).observe(document, {childList: true, subtree: true});
+    (new MutationObserver(checkPopup)).observe(document, {childList: true, subtree: true});
+
+    function checkInit(changes, observer) {
+        if($('#filter-postcode').length > 0) {
+            observer.disconnect();
+            init();
+        }
+    }
+
+    function checkPopup(changes, observer) {
+        if($('.leaflet-popup-content').length > 0){
+            observer.disconnect();
+            popup();
+        }
+    }
+
+    function popup() {
+        let popup = $('.leaflet-popup-content');
+
+        popup.find('h4').each(function() {
+           $(this).next().prepend('<p><span class="fas fa-clock"></span> ' + stages[stage].text + '</p>');
+        });
+
+        popup.find('leaflet-popup-content').css('height', '380px');
+    }
+
+    function init() {
+        let filters = $('#filter-postcode');
+        let parent = filters.parent()
+        filters.siblings().remove();
+        parent.text('');
+
+        parent.append('<form><p>Geef uw postcode op om stembureaus bij u in de buurt te vinden.</p>');
+        parent.append('<div class="formContainer"><label for="postcode">Postcode:</label><br /><input id="postcode" type="text" size="10" placeholder="1234 AA" /> <input type="submit" class="btn" value="Zoeken" /></div>');
+        parent.append('</form>');
+
+        parent.find('label').css({
+            'font-family': 'var(--fontFamily)',
+            'color': 'var(--contentColor)'
+        });
+        parent.find('#postcode').css({
+            'border': '1px solid #8795a1',
+            'font-size': 'var(--paragraphFontSize)',
+            'padding': '.8em',
+            'margin-top': '.5rem'
+        });
+        parent.find('.formContainer').css({
+            'margin-bottom': '1.5rem'
+        });
+
+        let details = $('[class^=DynamicMap_expandableTextDetails');
+        details.attr('open', 'open');
+        details.find('h3').text('Stembureaus');
+
+        $('[class^="DynamicMap_mapContainer"]').find('h4').first().next().prepend('<p><span class="fas fa-clock"></span> ' + stages[stage].text + '</p>');
+    }
+})();
